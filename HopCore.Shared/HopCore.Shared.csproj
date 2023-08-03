@@ -41,10 +41,19 @@
         <Compile Include="Config.cs" />
         <Compile Include="DependencyInjection\Dependency.cs" />
         <Compile Include="DependencyInjection\DependencyAttribute.cs" />
+        <Compile Include="ILogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Serialisation\IPacket.cs" />
         <Compile Include="Serialisation\Serializer.cs" />
         <Compile Include="Serialisation\SmartEvent.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="default.sql">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+      <Content Include="fxmanifest.lua">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -6,10 +6,8 @@ description 'FiveM Framework in C#'
 version '1.0.0'
 
 files {
-    'Newtonsoft.Json.dll',
-    'HopCore.Shared.dll',
-    'HopCore.Client.dll',
-    'HopCore.Server.dll'
+    '*.sql',
+    '*.json'
 }
 
 client_scripts {
@@ -19,3 +17,5 @@ client_scripts {
 server_scripts {
     'HopCore.Server.Core.net.dll'
 }
+
+database_connection 'server=213.136.89.237;database=s41_HopCore;user=u41_VsHG3BPVbv;password=gjM+irIhSm9=saKJ=FRPO8WH;CharSet=utf8mb4'

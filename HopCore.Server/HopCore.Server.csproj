@@ -11,6 +11,7 @@
         <AssemblyName>HopCore.Server</AssemblyName>
         <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
+        <LangVersion>8</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -31,21 +32,36 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
+    <PropertyGroup>
+      <PostBuildEvent>del HopCore.Server.dll.config</PostBuildEvent>
+    </PropertyGroup>
     <ItemGroup>
         <Reference Include="CitizenFX.Core.Server, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
           <HintPath>..\packages\CitizenFX.Core.Server.1.0.6335\lib\net45\CitizenFX.Core.Server.dll</HintPath>
           <Private>False</Private>
         </Reference>
+        <Reference Include="Microsoft.CSharp" />
+        <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+          <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
         <Reference Include="System" />
+        <Reference Include="System.ComponentModel.DataAnnotations" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
+        <Reference Include="System.Xml.Linq" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Database\IDbTable.cs" />
+        <Compile Include="Database\KeyAttributes.cs" />
         <Compile Include="Extensions\PlayerExtensions.cs" />
+        <Compile Include="IDatabaseContext.cs" />
+        <Compile Include="Models\PlayerData.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
+      <None Include="app.config" />
       <None Include="packages.config" />
     </ItemGroup>
     <ItemGroup>
