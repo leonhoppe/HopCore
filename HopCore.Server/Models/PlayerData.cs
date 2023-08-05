@@ -1,4 +1,5 @@
-﻿using HopCore.Server.Database;
+﻿using CitizenFX.Core;
+using HopCore.Server.Database;
 
 namespace HopCore.Server.Models {
     public sealed class PlayerData {
@@ -6,7 +7,7 @@ namespace HopCore.Server.Models {
         public string Rank { get; set; }
         public string Job { get; set; }
         public int JobGrade { get; set; }
-        public string Position { get; set; }
+        public Vector3 Position { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string DateOfBirth { get; set; }

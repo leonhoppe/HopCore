@@ -9,6 +9,8 @@ namespace HopCore.Server.Database {
 
         void Add(T item);
 
+        void Update(T item);
+
         void Clear();
 
         bool Contains(in T item);
@@ -19,10 +21,10 @@ namespace HopCore.Server.Database {
 
         Task<bool> RemoveAsync(T item);
 
-        public int Count { get; }
+        int Count { get; }
 
         void Insert(in int index, in T item);
         
-        public T this[object key] { get; set; }
+        T this[object key] { get; set; }
     }
 }

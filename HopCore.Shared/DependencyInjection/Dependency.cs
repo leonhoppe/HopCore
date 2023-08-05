@@ -22,7 +22,7 @@ namespace HopCore.Shared.DependencyInjection {
         public static TAccessor Provide<TAccessor, TImplementor>(TImplementor instance = default) where TImplementor : TAccessor {
             var type = typeof(TAccessor);
             if (Dependencies.ContainsKey(type)) {
-                throw new ArgumentException("Dependency already registered");
+                throw new ArgumentException($"Dependency {type.Name} already registered!");
             }
 
             if (EqualityComparer<TImplementor>.Default.Equals(instance, default)) 
@@ -42,7 +42,13 @@ namespace HopCore.Shared.DependencyInjection {
                     break;
             }
         
-            return (TAccessor)instance;
+            return instance;
+        }
+
+        public static void DisposeDependencies() {
+            foreach (var dependency in Dependencies.Values) {
+                (dependency as IDisposable)?.Dispose();
+            }
         }
     }
 }

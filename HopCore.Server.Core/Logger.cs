@@ -14,7 +14,8 @@ namespace HopCore.Server.Core {
             White = 7,
             DarkRed = 8,
             DarkBlue = 9;
-        
+
+        public int Errors = 0;
         private readonly Config _config;
 
         public Logger() {
@@ -35,10 +36,12 @@ namespace HopCore.Server.Core {
         }
 
         public void Error(object message) {
+            Errors++;
             CitizenFX.Core.Debug.WriteLine(FormatMessage(Red + "ERROR", message));
         }
         
         public void Fatal(object message) {
+            Errors++;
             CitizenFX.Core.Debug.WriteLine(FormatMessage(DarkRed + "ERROR", message, Red));
         }
 

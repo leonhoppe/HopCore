@@ -100,7 +100,9 @@
         <Reference Include="System.Xml.Linq" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Database\Convertors.cs" />
         <Compile Include="Database\DatabaseContext.cs" />
+        <Compile Include="Database\DbContextPopulator.cs" />
         <Compile Include="Database\DbTable.cs" />
         <Compile Include="Handlers\PlayerDataHandler.cs" />
         <Compile Include="Logger.cs" />
