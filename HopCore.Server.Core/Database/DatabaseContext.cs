@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Diagnostics;
+using HopCore.Server.Core.Models;
 using HopCore.Server.Database;
 using HopCore.Server.Models;
 using HopCore.Shared;
@@ -39,6 +39,7 @@ namespace HopCore.Server.Core.Database {
         }
 
         public IDbTable<PlayerData> Users { get; set; }
+        public IDbTable<DbLog> Logs { get; set; }
 
         public void Dispose() {
             _logger.Database("Disposing database connection...");

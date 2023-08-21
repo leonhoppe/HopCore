@@ -12,7 +12,7 @@ using HopCore.Shared.DependencyInjection;
 using Newtonsoft.Json;
 
 namespace HopCore.Server.Core.Database {
-    public class DbTable<T> : IDbTable<T> {
+    public sealed class DbTable<T> : IDbTable<T> {
         private readonly IDbConnection _connection;
         private readonly DatabaseContext _context;
         private readonly ILogger _logger;
@@ -60,6 +60,8 @@ namespace HopCore.Server.Core.Database {
                 _logger.Error($"Database model {typeof(T).Name} has no primary key!");
                 return false;
             }
+            
+            _logger.Database($"Metadata for {TableName} loaded.");
 
             return true;
         }
@@ -79,17 +81,25 @@ namespace HopCore.Server.Core.Database {
         }
 
         public T Get(in object key) {
-            var reader = _connection.ExecuteReader($"SELECT * FROM {TableName} WHERE {PrimaryKey.Name} = {PrepareValue(key)}");
+            var reader = _connection.ExecuteReader($"SELECT * FROM {TableName} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(key)});
             var data = ReadData(reader);
             reader.Dispose();
+            
+            _logger.Database($"Read entry {key} from {TableName} table.");
             return data.Count == 1 ? (T)LoadData(data[0]) : default;
         }
 
         public async void Add(T item) {
             var props = item.GetType().GetProperties();
-            var dataString = $"({string.Join(", ", props.Select(prop => PrepareValue(prop.GetValue(item))))})";
-
-            await _connection.ExecuteAsync($"INSERT INTO {TableName} {_addOrder} VALUES {dataString}");
+            var dataString = $"({string.Join(", ", props.Select(prop => "@" + prop.Name))})";
+            var parameters = new DynamicParameters();
+            
+            foreach (var prop in props) {
+                parameters.Add("@" + prop.Name, PrepareValue(prop.GetValue(item)));
+            }
+            
+            await _connection.ExecuteAsync($"INSERT INTO {TableName} {_addOrder} VALUES {dataString}", parameters);
+            _logger.Database($"Added new entry to {TableName} table.");
         }
 
         public async void Update(T item) {
@@ -101,30 +111,34 @@ namespace HopCore.Server.Core.Database {
                 statements.Add($"{info.Name} = {PrepareValue(info.GetValue(item))}");
             }
 
-            await _connection.ExecuteAsync($"UPDATE {TableName} SET {string.Join(", ", statements)} WHERE {PrimaryKey.Name} = {PrepareValue(PrimaryKey.GetValue(item))}");
+            await _connection.ExecuteAsync($"UPDATE {TableName} SET {string.Join(", ", statements)} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(PrimaryKey.GetValue(item))});
+            _logger.Database($"Updated entry in {TableName} table.");
         }
 
         public async void Clear() {
             await _connection.ExecuteAsync($"DELETE FROM {TableName}");
+            _logger.Database($"Cleared {TableName} table.");
         }
 
         public bool Contains(in T item) {
-            using var result = _connection.ExecuteReader($"SELECT {PrimaryKey.Name} FROM {TableName} WHERE {PrimaryKey.Name} = {PrepareValue(PrimaryKey.GetValue(item))}");
+            using var result = _connection.ExecuteReader($"SELECT {PrimaryKey.Name} FROM {TableName} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(PrimaryKey.GetValue(item))});
             return result.Read();
         }
         
         public async Task<bool> ContainsAsync(T item) {
-            using var result = await _connection.ExecuteReaderAsync($"SELECT {PrimaryKey.Name} FROM {TableName} WHERE {PrimaryKey.Name} = {PrepareValue(PrimaryKey.GetValue(item))}");
+            using var result = await _connection.ExecuteReaderAsync($"SELECT {PrimaryKey.Name} FROM {TableName} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(PrimaryKey.GetValue(item))});
             return result.Read();
         }
 
         public bool Remove(in T item) {
-            var rows = _connection.Execute($"DELETE FROM {TableName} WHERE {PrimaryKey.Name} = {PrepareValue(PrimaryKey.GetValue(item))}");
+            var rows = _connection.Execute($"DELETE FROM {TableName} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(PrimaryKey.GetValue(item))});
+            _logger.Database($"Removed entry from {TableName} table.");
             return rows != 0;
         }
         
         public async Task<bool> RemoveAsync(T item) {
-            var rows = await _connection.ExecuteAsync($"DELETE FROM {TableName} WHERE {PrimaryKey.Name} = {PrepareValue(PrimaryKey.GetValue(item))}");
+            var rows = await _connection.ExecuteAsync($"DELETE FROM {TableName} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(PrimaryKey.GetValue(item))});
+            _logger.Database($"Removed entry from {TableName} table.");
             return rows != 0;
         }
 
@@ -150,24 +164,20 @@ namespace HopCore.Server.Core.Database {
         public T this[object key] {
             get => Get(key);
             set {
-                _connection.Execute($"DELETE FROM {TableName} WHERE {PrimaryKey.Name} = {PrepareValue(PrimaryKey.GetValue(key))}");
+                _connection.Execute($"DELETE FROM {TableName} WHERE {PrimaryKey.Name} = @Key", new {Key = PrepareValue(PrimaryKey.GetValue(key))});
                 Add(value);
             }
         }
 
-        private string PrepareValue(object input) {
-            if (input == null) return "NULL";
+        private object PrepareValue(object input) {
+            if (input == null) return null;
             
             if (HopCore.Converters.ContainsKey(input.GetType())) {
                 var convertor = HopCore.Converters[input.GetType()];
                 input = convertor.ConvertForDatabaseInternal(input);
             }
             
-            var result = Convert.ToString(input);
-
-            if (input is bool) return (bool)input ? "1" : "0";
-            if (!IsNumericType(result)) return $"'{result}'";
-            return result;
+            return input;
         }
 
         private object LoadData(in IDictionary<string, object> data, Type inType = null, string[] foreinKeys = null) {
@@ -202,7 +212,7 @@ namespace HopCore.Server.Core.Database {
                     var prim = handlerProps.Single(prop => prop.Name == nameof(PrimaryKey)).GetValue(handler) as PropertyInfo;
                     var keys = handlerProps.Single(prop => prop.Name == nameof(ForeignKeys)).GetValue(handler) as string[];
                     
-                    var reader = _connection.ExecuteReader($"SELECT * FROM {table} WHERE {prim!.Name} = {PrepareValue(value)}");
+                    var reader = _connection.ExecuteReader($"SELECT * FROM {table} WHERE {prim!.Name} = @Key", new {Key = PrepareValue(value)});
                     var data2 = ReadData(reader);
                     reader.Dispose();
 
@@ -242,25 +252,6 @@ namespace HopCore.Server.Core.Database {
             }
 
             return data;
-        }
-
-        private bool IsNumericType(in object o) {
-            switch (Type.GetTypeCode(o.GetType())) {
-                case TypeCode.Byte:
-                case TypeCode.SByte:
-                case TypeCode.UInt16:
-                case TypeCode.UInt32:
-                case TypeCode.UInt64:
-                case TypeCode.Int16:
-                case TypeCode.Int32:
-                case TypeCode.Int64:
-                case TypeCode.Decimal:
-                case TypeCode.Double:
-                case TypeCode.Single:
-                    return true;
-                default:
-                    return false;
-            }
         }
 
         public override string ToString() {

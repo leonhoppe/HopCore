@@ -32,15 +32,24 @@ namespace HopCore.Server.Core {
                 CurrentResource = API.GetCurrentResourceName();
                 Environment.CurrentDirectory = Path.GetFullPath(API.GetResourcePath(CurrentResource));
 
-                var conString = API.GetResourceMetadata(CurrentResource, "database_connection", 0);
-                Dependency.Provide<IDbContextPopulator, DbContextPopulator>();
-                Dependency.Provide<IDbContext, DatabaseContext>(new DatabaseContext(conString));
+                #region Database INIT
+                    var conString = API.GetResourceMetadata(CurrentResource, "database_connection", 0);
+                    Dependency.Provide<IDbContextPopulator, DbContextPopulator>();
+                    
+                    var context = new DatabaseContext(conString);
+                    logger.Context = context;
+                    
+                    Dependency.Provide<IDbContext, DatabaseContext>(context);
+                #endregion
+                
                 _logger.Debug("All dependencies provided.");
 
-                _playerDataHandler = new PlayerDataHandler();
-                EventHandlers["onResourceStart"] += new Action<string>(OnStart);
-                EventHandlers["playerJoining"] += new Action<Player>(_playerDataHandler.OnPlayerJoin);
-                EventHandlers["playerDropped"] += new Action<Player>(_playerDataHandler.OnPlayerQuit);
+                #region EventHandling
+                    _playerDataHandler = new PlayerDataHandler();
+                    EventHandlers["onResourceStart"] += new Action<string>(OnStart);
+                    EventHandlers["playerJoining"] += new Action<Player>(_playerDataHandler.OnPlayerJoin);
+                    EventHandlers["playerDropped"] += new Action<Player>(_playerDataHandler.OnPlayerQuit);
+                #endregion
             
             }
             catch (Exception e) {

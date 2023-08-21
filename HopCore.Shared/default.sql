@@ -10,4 +10,12 @@
     Sex VARCHAR(1),
     Skin LONGTEXT,
     Dead BIT
-) CHAR SET utf8mb4;
+);
+
+CREATE TABLE IF NOT EXISTS Logs (
+    Id VARCHAR(36) PRIMARY KEY,
+    TimeStamp DATETIME,
+    Resource VARCHAR(255),
+    Type VARCHAR(255),
+    Message LONGTEXT
+);
